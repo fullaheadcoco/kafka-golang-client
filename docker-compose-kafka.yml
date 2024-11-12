@@ -1,5 +1,6 @@
 version: '3.7'
 
+# https://github.com/Pierrotws/kafka-ssl-compose/blob/master/docker-compose.yml 
 services:
   zookeeper-1:
     image: confluentinc/cp-zookeeper:latest
@@ -9,6 +10,8 @@ services:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_SERVER_ID: 1
       ZOOKEEPER_SERVERS: zookeeper-1:2888:3888;zookeeper-2:2888:3888;zookeeper-3:2888:3888
+    volumes:
+      - ./secrets:/etc/kafka/secrets # 인증서 파일 경로
 
   zookeeper-2:
     image: confluentinc/cp-zookeeper:latest
@@ -18,6 +21,8 @@ services:
       ZOOKEEPER_CLIENT_PORT: 2182
       ZOOKEEPER_SERVER_ID: 2
       ZOOKEEPER_SERVERS: zookeeper-1:2888:3888;zookeeper-2:2888:3888;zookeeper-3:2888:3888
+    volumes:
+      - ./secrets:/etc/kafka/secrets
 
   zookeeper-3:
     image: confluentinc/cp-zookeeper:latest
@@ -26,7 +31,9 @@ services:
     environment:
       ZOOKEEPER_CLIENT_PORT: 2183
       ZOOKEEPER_SERVER_ID: 3
-      ZOOKEEPER_SERVERS: zookeeper-1:2888:3888;zoozookeeper-2:2888:3888;zookeeper-3:2888:3888
+      ZOOKEEPER_SERVERS: zookeeper-1:2888:3888;zookeeper-2:2888:3888;zookeeper-3:2888:3888
+    volumes:
+      - ./secrets:/etc/kafka/secrets
 
   kafka-1:
     image: confluentinc/cp-kafka:latest
@@ -34,11 +41,20 @@ services:
       - "9092:9092"
       - "29092:29092"
     environment:
-      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka-1:19092,EXTERNAL://${DOCKER_HOST_IP:-127.0.0.1}:9092,DOCKER://host.docker.internal:29092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,DOCKER:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_ADVERTISED_LISTENERS: SSL://kafka-1:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: SSL:SSL
       KAFKA_ZOOKEEPER_CONNECT: "zookeeper-1:2181,zookeeper-2:2182,zookeeper-3:2183"
       KAFKA_BROKER_ID: 1
+      KAFKA_SSL_KEYSTORE_FILENAME: kafka-1.keystore.jks
+      KAFKA_SSL_KEYSTORE_CREDENTIALS: cert_creds
+      KAFKA_SSL_KEY_CREDENTIALS: cert_creds
+      KAFKA_SSL_TRUSTSTORE_FILENAME: kafka-1.truststore.jks
+      KAFKA_SSL_TRUSTSTORE_CREDENTIALS: cert_creds
+      KAFKA_SSL_CLIENT_AUTH: 'required'
+      KAFKA_SECURITY_PROTOCOL: SSL
+      KAFKA_SECURITY_INTER_BROKER_PROTOCOL: SSL
+    volumes:
+      - ./secrets:/etc/kafka/secrets
     depends_on:
       - zookeeper-1
       - zookeeper-2
@@ -50,11 +66,20 @@ services:
       - "9093:9093"
       - "29093:29093"
     environment:
-      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka-2:19093,EXTERNAL://${DOCKER_HOST_IP:-127.0.0.1}:9093,DOCKER://host.docker.internal:29093
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,DOCKER:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_ADVERTISED_LISTENERS: SSL://kafka-2:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: SSL:SSL
       KAFKA_ZOOKEEPER_CONNECT: "zookeeper-1:2181,zookeeper-2:2182,zookeeper-3:2183"
       KAFKA_BROKER_ID: 2
+      KAFKA_SSL_KEYSTORE_FILENAME: kafka-2.keystore.jks
+      KAFKA_SSL_KEYSTORE_CREDENTIALS: cert_creds
+      KAFKA_SSL_KEY_CREDENTIALS: cert_creds
+      KAFKA_SSL_TRUSTSTORE_FILENAME: kafka-2.truststore.jks
+      KAFKA_SSL_TRUSTSTORE_CREDENTIALS: cert_creds
+      KAFKA_SSL_CLIENT_AUTH: 'required'
+      KAFKA_SECURITY_PROTOCOL: SSL
+      KAFKA_SECURITY_INTER_BROKER_PROTOCOL: SSL
+    volumes:
+      - ./secrets:/etc/kafka/secrets
     depends_on:
       - zookeeper-1
       - zookeeper-2
@@ -66,11 +91,20 @@ services:
       - "9094:9094"
       - "29094:29094"
     environment:
-      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka-3:19094,EXTERNAL://${DOCKER_HOST_IP:-127.0.0.1}:9094,DOCKER://host.docker.internal:29094
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,DOCKER:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_ADVERTISED_LISTENERS: SSL://kafka-3:9094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: SSL:SSL
       KAFKA_ZOOKEEPER_CONNECT: "zookeeper-1:2181,zookeeper-2:2182,zookeeper-3:2183"
       KAFKA_BROKER_ID: 3
+      KAFKA_SSL_KEYSTORE_FILENAME: kafka-3.keystore.jks
+      KAFKA_SSL_KEYSTORE_CREDENTIALS: cert_creds
+      KAFKA_SSL_KEY_CREDENTIALS: cert_creds
+      KAFKA_SSL_TRUSTSTORE_FILENAME: kafka-3.truststore.jks
+      KAFKA_SSL_TRUSTSTORE_CREDENTIALS: cert_creds
+      KAFKA_SSL_CLIENT_AUTH: 'required'
+      KAFKA_SECURITY_PROTOCOL: SSL
+      KAFKA_SECURITY_INTER_BROKER_PROTOCOL: SSL
+    volumes:
+      - ./secrets:/etc/kafka/secrets
     depends_on:
       - zookeeper-1
       - zookeeper-2
@@ -88,4 +122,11 @@ services:
     environment:
       - DYNAMIC_CONFIG_ENABLED=true
       - KAFKA_CLUSTERS_0_NAME=peters_kafka
-      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka-1:19092
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka-1:9092,kafka-2:9092,kafka-3:9092
+      - KAFKA_CLUSTERS_0_PROPERTIES_SECURITY_PROTOCOL=SSL
+      - KAFKA_CLUSTERS_0_PROPERTIES_SSL_KEYSTORE_LOCATION=/etc/kafka/secrets/kafka-ui.keystore.jks
+      - KAFKA_CLUSTERS_0_PROPERTIES_SSL_KEYSTORE_PASSWORD=datahub
+      - KAFKA_CLUSTERS_0_SSL_TRUSTSTORELOCATION=/etc/kafka/secrets/kafka-ui.truststore.jks
+      - KAFKA_CLUSTERS_0_SSL_TRUSTSTOREPASSWORD=datahub
+    volumes:
+      - ./secrets:/etc/kafka/secrets # Optional, if Kafka UI needs SSL files

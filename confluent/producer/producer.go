@@ -7,12 +7,18 @@ import (
 )
 
 func main() {
-
-	p, err := kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": "localhost"})
+	// TLS 설정 포함된 Producer 생성
+	p, err := kafka.NewProducer(&kafka.ConfigMap{
+		"bootstrap.servers":        "localhost",
+		"security.protocol":        "SSL",
+		"ssl.ca.location":          "../tmp/datahub-ca.crt",
+		"ssl.certificate.location": "../tmp/localhost-ca-signed.crt",
+		// "ssl.key.location":         "../tmp/client-key.pem",
+		"ssl.key.password": "datahub", // 필요한 경우에만 사용
+	})
 	if err != nil {
 		panic(err)
 	}
-
 	defer p.Close()
 
 	// Delivery report handler for produced messages

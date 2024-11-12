@@ -10,9 +10,13 @@ import (
 func main() {
 
 	c, err := kafka.NewConsumer(&kafka.ConfigMap{
-		"bootstrap.servers": "localhost",
-		"group.id":          "myGroup",
-		"auto.offset.reset": "earliest",
+		"bootstrap.servers":     "localhost:9092",
+		"group.id":              "myGroup",
+		"auto.offset.reset":     "earliest",
+		"security.protocol":     "ssl",
+		"ssl.ca.location":       "../tmp/datahub-ca.crt",
+		"ssl.keystore.location": "../secrets/localhost.keystore.jks",
+		"ssl.keystore.password": "datahub",
 	})
 
 	if err != nil {
